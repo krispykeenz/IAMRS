@@ -1,0 +1,154 @@
+@page "/"
+@using IAMRS.Core.Entities
+@using IAMRS.Core.Enums
+@using IAMRS.Core.Interfaces
+@inject IUnitOfWork UnitOfWork
+@rendermode InteractiveServer
+
+<PageTitle>Dashboard - IAMRS</PageTitle>
+
+<h1 class="mb-4">Dashboard</h1>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Machines</h5>
+                <h2 class="card-text">@_totalMachines</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Online</h5>
+                <h2 class="card-text">@_onlineMachines</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Warnings</h5>
+                <h2 class="card-text">@_warningMachines</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h5 class="card-title">Critical</h5>
+                <h2 class="card-text">@_criticalMachines</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">Machine Status</div>
+            <div class="card-body">
+                @if (_machines == null)
+                {
+                    <p>Loading...</p>
+                }
+                else
+                {
+                    <div class="row">
+                        @foreach (var machine in _machines)
+                        {
+                            <div class="col-md-4 mb-3">
+                                <div class="card @GetStatusClass(machine.Status)">
+                                    <div class="card-body">
+                                        <h6 class="card-title">@machine.MachineCode</h6>
+                                        <p class="card-text mb-1">@machine.Name</p>
+                                        <small class="text-muted">@machine.Location</small>
+                                        <div class="mt-2">
+                                            <span class="badge @GetBadgeClass(machine.Status)">@machine.Status</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">Recent Alerts</div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                @if (_alerts == null)
+                {
+                    <p>Loading...</p>
+                }
+                else if (!_alerts.Any())
+                {
+                    <p class="text-muted">No recent alerts</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var alert in _alerts.Take(10))
+                        {
+                            <li class="list-group-item @GetAlertClass(alert.Severity)">
+                                <strong>@alert.Severity</strong>: @alert.Message
+                                <br><small class="text-muted">@alert.CreatedAt.ToString("g")</small>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Machine>? _machines;
+    private List<Alert>? _alerts;
+    private int _totalMachines;
+    private int _onlineMachines;
+    private int _warningMachines;
+    private int _criticalMachines;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _machines = UnitOfWork.Machines.Query().ToList();
+        _alerts = UnitOfWork.Alerts.Query().OrderByDescending(a => a.CreatedAt).Take(20).ToList();
+
+        _totalMachines = _machines.Count;
+        _onlineMachines = _machines.Count(m => m.Status == MachineStatus.Online);
+        _warningMachines = _machines.Count(m => m.Status == MachineStatus.Warning);
+        _criticalMachines = _machines.Count(m => m.Status == MachineStatus.Critical);
+    }
+
+    private string GetStatusClass(MachineStatus status) => status switch
+    {
+        MachineStatus.Online => "border-success",
+        MachineStatus.Warning => "border-warning",
+        MachineStatus.Critical => "border-danger",
+        _ => "border-secondary"
+    };
+
+    private string GetBadgeClass(MachineStatus status) => status switch
+    {
+        MachineStatus.Online => "bg-success",
+        MachineStatus.Warning => "bg-warning text-dark",
+        MachineStatus.Critical => "bg-danger",
+        _ => "bg-secondary"
+    };
+
+    private string GetAlertClass(AlertSeverity severity) => severity switch
+    {
+        AlertSeverity.Critical => "list-group-item-danger",
+        AlertSeverity.Warning => "list-group-item-warning",
+        _ => ""
+    };
+}

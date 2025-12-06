@@ -1,0 +1,215 @@
+@page "/machines/{Id:guid}"
+@using IAMRS.Core.Entities
+@using IAMRS.Core.Enums
+@using IAMRS.Core.Interfaces
+@using System.Text.Json
+@inject IUnitOfWork UnitOfWork
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(_machine?.Name ?? "Machine") - IAMRS</PageTitle>
+
+@if (_machine == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/machines">Machines</a></li>
+            <li class="breadcrumb-item active">@_machine.MachineCode</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>@_machine.Name</h1>
+        <span class="badge fs-5 @GetBadgeClass(_machine.Status)">@_machine.Status</span>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Machine Information</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Code</dt>
+                        <dd class="col-sm-8">@_machine.MachineCode</dd>
+                        <dt class="col-sm-4">Type</dt>
+                        <dd class="col-sm-8">@_machine.Type</dd>
+                        <dt class="col-sm-4">Location</dt>
+                        <dd class="col-sm-8">@_machine.Location</dd>
+                        <dt class="col-sm-4">Manufacturer</dt>
+                        <dd class="col-sm-8">@(_machine.Manufacturer ?? "N/A")</dd>
+                        <dt class="col-sm-4">Model</dt>
+                        <dd class="col-sm-8">@(_machine.Model ?? "N/A")</dd>
+                        <dt class="col-sm-4">Last Telemetry</dt>
+                        <dd class="col-sm-8">@(_machine.LastTelemetryAt?.ToString("g") ?? "Never")</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Thresholds</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-6">Temp Warning</dt>
+                        <dd class="col-sm-6">@_machine.TemperatureWarningThreshold °C</dd>
+                        <dt class="col-sm-6">Temp Critical</dt>
+                        <dd class="col-sm-6">@_machine.TemperatureCriticalThreshold °C</dd>
+                        <dt class="col-sm-6">Vibration Max</dt>
+                        <dd class="col-sm-6">@_machine.VibrationThreshold mm/s</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between">
+            <span>Telemetry History (Last 50 readings)</span>
+            <button class="btn btn-sm btn-outline-primary" @onclick="RefreshData">Refresh</button>
+        </div>
+        <div class="card-body">
+            <canvas id="telemetryChart" style="height: 300px;"></canvas>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Recent Telemetry Data</div>
+                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Temp</th>
+                                <th>Vibration</th>
+                                <th>Pressure</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var t in _telemetry.Take(20))
+                            {
+                                <tr>
+                                    <td>@t.Timestamp.ToString("HH:mm:ss")</td>
+                                    <td>@(t.Temperature?.ToString("F1") ?? "-") °C</td>
+                                    <td>@(t.Vibration?.ToString("F2") ?? "-")</td>
+                                    <td>@(t.Pressure?.ToString("F1") ?? "-")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Recent Alerts</div>
+                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                    @if (!_alerts.Any())
+                    {
+                        <p class="text-muted">No alerts</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var alert in _alerts.Take(10))
+                            {
+                                <li class="list-group-item @GetAlertClass(alert.Severity)">
+                                    <strong>@alert.Severity</strong>: @alert.Message
+                                    <br><small class="text-muted">@alert.CreatedAt.ToString("g")</small>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private Machine? _machine;
+    private List<TelemetryData> _telemetry = new();
+    private List<Alert> _alerts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _telemetry.Any())
+        {
+            await RenderChartAsync();
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _machine = await UnitOfWork.Machines.GetByIdAsync(Id);
+        if (_machine != null)
+        {
+            _telemetry = UnitOfWork.TelemetryData.Query()
+                .Where(t => t.MachineId == Id)
+                .OrderByDescending(t => t.Timestamp)
+                .Take(50)
+                .ToList();
+
+            _alerts = UnitOfWork.Alerts.Query()
+                .Where(a => a.MachineId == Id)
+                .OrderByDescending(a => a.CreatedAt)
+                .Take(20)
+                .ToList();
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadDataAsync();
+        StateHasChanged();
+        await RenderChartAsync();
+    }
+
+    private async Task RenderChartAsync()
+    {
+        var ordered = _telemetry.OrderBy(t => t.Timestamp).ToList();
+        var labels = ordered.Select(t => t.Timestamp.ToString("HH:mm:ss")).ToList();
+        var temps = ordered.Select(t => t.Temperature ?? 0).ToList();
+        var vibs = ordered.Select(t => t.Vibration ?? 0).ToList();
+
+        var chartData = new
+        {
+            labels,
+            datasets = new[]
+            {
+                new { label = "Temperature (°C)", data = temps, borderColor = "rgb(255, 99, 132)", tension = 0.1 },
+                new { label = "Vibration (mm/s)", data = vibs, borderColor = "rgb(54, 162, 235)", tension = 0.1 }
+            }
+        };
+
+        // Chart.js rendering via JS interop would go here
+        // For now, data is prepared but requires JS interop setup
+    }
+
+    private string GetBadgeClass(MachineStatus status) => status switch
+    {
+        MachineStatus.Online => "bg-success",
+        MachineStatus.Warning => "bg-warning text-dark",
+        MachineStatus.Critical => "bg-danger",
+        _ => "bg-secondary"
+    };
+
+    private string GetAlertClass(AlertSeverity severity) => severity switch
+    {
+        AlertSeverity.Critical => "list-group-item-danger",
+        AlertSeverity.Warning => "list-group-item-warning",
+        _ => ""
+    };
+}

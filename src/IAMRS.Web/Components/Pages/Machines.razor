@@ -1,0 +1,68 @@
+@page "/machines"
+@using IAMRS.Core.Entities
+@using IAMRS.Core.Enums
+@using IAMRS.Core.Interfaces
+@inject IUnitOfWork UnitOfWork
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Machines - IAMRS</PageTitle>
+
+<h1 class="mb-4">Machines</h1>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Last Telemetry</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_machines == null)
+                {
+                    <tr><td colspan="6">Loading...</td></tr>
+                }
+                else
+                {
+                    @foreach (var machine in _machines)
+                    {
+                        <tr @onclick="() => NavigateToDetail(machine.Id)" style="cursor: pointer;">
+                            <td><strong>@machine.MachineCode</strong></td>
+                            <td>@machine.Name</td>
+                            <td>@machine.Type</td>
+                            <td>@machine.Location</td>
+                            <td><span class="badge @GetBadgeClass(machine.Status)">@machine.Status</span></td>
+                            <td>@(machine.LastTelemetryAt?.ToString("g") ?? "Never")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<Machine>? _machines;
+
+    protected override void OnInitialized()
+    {
+        _machines = UnitOfWork.Machines.Query().OrderBy(m => m.MachineCode).ToList();
+    }
+
+    private void NavigateToDetail(Guid id) => Navigation.NavigateTo($"/machines/{id}");
+
+    private string GetBadgeClass(MachineStatus status) => status switch
+    {
+        MachineStatus.Online => "bg-success",
+        MachineStatus.Warning => "bg-warning text-dark",
+        MachineStatus.Critical => "bg-danger",
+        MachineStatus.Maintenance => "bg-info",
+        _ => "bg-secondary"
+    };
+}

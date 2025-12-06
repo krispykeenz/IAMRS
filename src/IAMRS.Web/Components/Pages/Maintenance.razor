@@ -1,0 +1,150 @@
+@page "/maintenance"
+@using IAMRS.Core.Entities
+@using IAMRS.Core.Enums
+@using IAMRS.Core.Interfaces
+@inject IUnitOfWork UnitOfWork
+@rendermode InteractiveServer
+
+<PageTitle>Maintenance - IAMRS</PageTitle>
+
+<h1 class="mb-4">Maintenance Tickets</h1>
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="ShowCreateForm">+ Create Ticket</button>
+</div>
+
+@if (_showForm)
+{
+    <div class="card mb-4">
+        <div class="card-header">Create Ticket</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Machine</label>
+                    <select class="form-select" @bind="_newTicket.MachineId">
+                        <option value="">Select...</option>
+                        @foreach (var m in _machines ?? new())
+                        {
+                            <option value="@m.Id">@m.MachineCode - @m.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Priority</label>
+                    <select class="form-select" @bind="_newTicket.Priority">
+                        @foreach (var p in Enum.GetValues<TicketPriority>())
+                        {
+                            <option value="@p">@p</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-control" @bind="_newTicket.Title" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" rows="3" @bind="_newTicket.Description"></textarea>
+            </div>
+            <button class="btn btn-success" @onclick="CreateTicket">Save</button>
+            <button class="btn btn-secondary" @onclick="() => _showForm = false">Cancel</button>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Ticket #</th>
+                    <th>Machine</th>
+                    <th>Title</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_tickets == null)
+                {
+                    <tr><td colspan="6">Loading...</td></tr>
+                }
+                else if (!_tickets.Any())
+                {
+                    <tr><td colspan="6" class="text-muted">No tickets</td></tr>
+                }
+                else
+                {
+                    @foreach (var ticket in _tickets)
+                    {
+                        <tr>
+                            <td><strong>@ticket.TicketNumber</strong></td>
+                            <td>@(_machines?.FirstOrDefault(m => m.Id == ticket.MachineId)?.MachineCode ?? "?")</td>
+                            <td>@ticket.Title</td>
+                            <td><span class="badge @GetPriorityClass(ticket.Priority)">@ticket.Priority</span></td>
+                            <td><span class="badge @GetStatusClass(ticket.Status)">@ticket.Status</span></td>
+                            <td>@ticket.CreatedAt.ToString("g")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<MaintenanceTicket>? _tickets;
+    private List<Machine>? _machines;
+    private bool _showForm;
+    private MaintenanceTicket _newTicket = new();
+
+    protected override void OnInitialized()
+    {
+        LoadData();
+    }
+
+    private void LoadData()
+    {
+        _tickets = UnitOfWork.MaintenanceTickets.Query().OrderByDescending(t => t.CreatedAt).Take(50).ToList();
+        _machines = UnitOfWork.Machines.Query().ToList();
+    }
+
+    private void ShowCreateForm()
+    {
+        _newTicket = new MaintenanceTicket { Priority = TicketPriority.Medium };
+        _showForm = true;
+    }
+
+    private async Task CreateTicket()
+    {
+        if (_newTicket.MachineId == Guid.Empty || string.IsNullOrWhiteSpace(_newTicket.Title))
+            return;
+
+        _newTicket.TicketNumber = $"MT-{DateTime.UtcNow:yyyyMMdd-HHmmss}";
+        _newTicket.Status = TicketStatus.Open;
+        await UnitOfWork.MaintenanceTickets.AddAsync(_newTicket);
+        await UnitOfWork.SaveChangesAsync();
+        _showForm = false;
+        LoadData();
+        StateHasChanged();
+    }
+
+    private string GetPriorityClass(TicketPriority priority) => priority switch
+    {
+        TicketPriority.Urgent => "bg-danger",
+        TicketPriority.High => "bg-warning text-dark",
+        TicketPriority.Medium => "bg-info",
+        _ => "bg-secondary"
+    };
+
+    private string GetStatusClass(TicketStatus status) => status switch
+    {
+        TicketStatus.Open => "bg-primary",
+        TicketStatus.InProgress => "bg-info",
+        TicketStatus.Resolved => "bg-success",
+        TicketStatus.Closed => "bg-secondary",
+        _ => "bg-dark"
+    };
+}

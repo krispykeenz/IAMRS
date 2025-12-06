@@ -1,0 +1,96 @@
+@page "/alerts"
+@using IAMRS.Core.Entities
+@using IAMRS.Core.Enums
+@using IAMRS.Core.Interfaces
+@inject IUnitOfWork UnitOfWork
+@rendermode InteractiveServer
+
+<PageTitle>Alerts - IAMRS</PageTitle>
+
+<h1 class="mb-4">Alerts</h1>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Severity</th>
+                    <th>Type</th>
+                    <th>Message</th>
+                    <th>Machine</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_alerts == null)
+                {
+                    <tr><td colspan="6">Loading...</td></tr>
+                }
+                else
+                {
+                    @foreach (var alert in _alerts)
+                    {
+                        <tr class="@GetRowClass(alert.Severity)">
+                            <td><span class="badge @GetBadgeClass(alert.Severity)">@alert.Severity</span></td>
+                            <td>@alert.Type</td>
+                            <td>@alert.Message</td>
+                            <td>@(_machines?.FirstOrDefault(m => m.Id == alert.MachineId)?.MachineCode ?? "Unknown")</td>
+                            <td>@alert.CreatedAt.ToString("g")</td>
+                            <td>
+                                @if (alert.IsAcknowledged)
+                                {
+                                    <span class="badge bg-secondary">Acknowledged</span>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => AcknowledgeAlert(alert)">Acknowledge</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<Alert>? _alerts;
+    private List<Machine>? _machines;
+
+    protected override void OnInitialized()
+    {
+        LoadData();
+    }
+
+    private void LoadData()
+    {
+        _alerts = UnitOfWork.Alerts.Query().OrderByDescending(a => a.CreatedAt).Take(100).ToList();
+        _machines = UnitOfWork.Machines.Query().ToList();
+    }
+
+    private async Task AcknowledgeAlert(Alert alert)
+    {
+        alert.IsAcknowledged = true;
+        alert.AcknowledgedAt = DateTime.UtcNow;
+        UnitOfWork.Alerts.Update(alert);
+        await UnitOfWork.SaveChangesAsync();
+        LoadData();
+        StateHasChanged();
+    }
+
+    private string GetBadgeClass(AlertSeverity severity) => severity switch
+    {
+        AlertSeverity.Critical => "bg-danger",
+        AlertSeverity.Warning => "bg-warning text-dark",
+        _ => "bg-info"
+    };
+
+    private string GetRowClass(AlertSeverity severity) => severity switch
+    {
+        AlertSeverity.Critical => "table-danger",
+        AlertSeverity.Warning => "table-warning",
+        _ => ""
+    };
+}
