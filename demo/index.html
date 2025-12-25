@@ -2,80 +2,71 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>IAMRS — Demo Mode</title>
     <meta name="robots" content="noindex" />
+
+    <!-- Match the real Blazor app styling (Bootstrap + app.css). -->
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <link rel="stylesheet" href="./bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="./app.css" />
+
+    <!-- Demo-specific layout styles (mirrors MainLayout/NavMenu). -->
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <header class="site-header">
-      <div class="container header-row">
-        <div>
-          <div class="kicker">DEMO MODE (static showcase)</div>
-          <h1>Industrial Asset Monitoring & Reporting System (IAMRS)</h1>
-          <p class="subtitle">Mock telemetry dashboard with simulated updates (no .NET / SQL Server).</p>
-        </div>
-        <div class="header-actions">
-          <a class="btn" href="https://github.com/krispykeenz/IAMRS" target="_blank" rel="noopener">View repo</a>
-        </div>
-      </div>
-    </header>
-
-    <main class="container">
-      <section class="card">
-        <div class="row">
-          <h2 class="m0">Demo dashboard</h2>
-          <div class="row gap-sm">
-            <label class="field">
-              <span class="label">Status</span>
-              <select id="statusFilter">
-                <option value="All" selected>All</option>
-                <option value="Online">Online</option>
-                <option value="Warning">Warning</option>
-                <option value="Critical">Critical</option>
-                <option value="Offline">Offline</option>
-              </select>
-            </label>
-            <button class="btn" id="tickBtn" type="button">Simulate tick</button>
+    <div class="page">
+      <div class="sidebar">
+        <div class="top-row ps-3 navbar navbar-dark">
+          <div class="container-fluid">
+            <a class="navbar-brand" href="#/">IAMRS</a>
           </div>
         </div>
 
-        <div class="divider"></div>
+        <input id="navToggle" type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
-        <div class="grid-2" style="grid-template-columns: 1.2fr 0.8fr;">
-          <div class="card" style="box-shadow:none;">
-            <h2>Machines</h2>
-            <div id="table" class="cart-list"></div>
-          </div>
-
-          <div class="card" style="box-shadow:none;">
-            <h2>Telemetry snapshot</h2>
-            <p class="muted small">Select a machine to view a simulated trend.</p>
-            <div class="row">
-              <div class="pill" id="selectedMachine">—</div>
-              <div class="pill" id="selectedStatus">—</div>
+        <div class="nav-scrollable" id="navMenu">
+          <nav class="flex-column">
+            <div class="nav-item px-3">
+              <a class="nav-link" href="#/" data-nav="dashboard">Dashboard</a>
             </div>
-            <div style="height:.75rem;"></div>
-            <canvas id="trend" width="800" height="360" style="width:100%; height:auto;"></canvas>
+            <div class="nav-item px-3">
+              <a class="nav-link" href="#/machines" data-nav="machines">Machines</a>
+            </div>
+            <div class="nav-item px-3">
+              <a class="nav-link" href="#/alerts" data-nav="alerts">Alerts</a>
+            </div>
+            <div class="nav-item px-3">
+              <a class="nav-link" href="#/maintenance" data-nav="maintenance">Maintenance</a>
+            </div>
+          </nav>
+        </div>
+      </div>
+
+      <main>
+        <div class="top-row px-4 d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge text-bg-secondary">DEMO MODE</span>
+            <span class="text-muted small">Static showcase (no .NET / SQL Server)</span>
+            <span class="text-muted small" id="lastTick">—</span>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <button id="demoTickButton" type="button" class="btn btn-sm btn-outline-primary">Simulate tick</button>
+            <a
+              class="btn btn-sm btn-outline-secondary"
+              href="https://github.com/krispykeenz/IAMRS"
+              target="_blank"
+              rel="noopener"
+            >View repo</a>
           </div>
         </div>
-      </section>
 
-      <section class="card" style="margin-top: 1rem;">
-        <h2>Demo notes</h2>
-        <ul class="bullets">
-          <li>Real system is a .NET 8 solution with a REST API, dashboard, and simulator.</li>
-          <li>This demo avoids Docker/SQL and focuses on UX + monitoring concepts.</li>
-        </ul>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <div class="container footer-row">
-        <span class="muted">IAMRS — Demo Mode</span>
-        <span class="muted">Static portfolio build</span>
-      </div>
-    </footer>
+        <article class="content px-4">
+          <div id="app"></div>
+        </article>
+      </main>
+    </div>
 
     <!-- DEMO MODE ONLY: safe, static showcase. Remove the /demo folder when publishing a real deployment. -->
     <script src="./app.js"></script>
