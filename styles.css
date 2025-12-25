@@ -1,289 +1,153 @@
-:root {
-  --bg: #0b1020;
-  --card: rgba(255, 255, 255, 0.08);
-  --card-border: rgba(255, 255, 255, 0.14);
-  --text: rgba(255, 255, 255, 0.92);
-  --muted: rgba(255, 255, 255, 0.7);
-  --accent: #feca57;
-  --accent-2: #ff6b6b;
-  --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
-}
-
-* {
-  box-sizing: border-box;
-}
+/* Demo-only styles that mirror the Blazor layout CSS (MainLayout/NavMenu).
+   This keeps the GitHub Pages demo looking close to the real IAMRS.Web app. */
 
 html,
 body {
   height: 100%;
 }
 
-body {
-  margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
-    "Segoe UI Emoji";
-  color: var(--text);
-  background: radial-gradient(1200px 800px at 20% 20%, rgba(102, 126, 234, 0.35), transparent 60%),
-    radial-gradient(1000px 700px at 80% 10%, rgba(254, 202, 87, 0.22), transparent 55%),
-    radial-gradient(900px 700px at 70% 90%, rgba(255, 107, 107, 0.22), transparent 60%),
-    var(--bg);
-}
-
-a {
-  color: inherit;
-}
-
-.container {
-  width: min(1100px, calc(100% - 2rem));
-  margin: 0 auto;
-}
-
-.site-header {
-  padding: 2rem 0 1rem;
-}
-
-.header-row {
+.page {
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-.kicker {
-  display: inline-block;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-  border: 1px solid var(--card-border);
-  background: rgba(255, 255, 255, 0.06);
-  padding: 0.35rem 0.65rem;
-  border-radius: 999px;
+main {
+  flex: 1;
 }
 
-h1 {
-  margin: 0.65rem 0 0.35rem;
-  font-size: 2.1rem;
+.sidebar {
+  background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
 }
 
-h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1.25rem;
+/* Top bar inside main content */
+.top-row {
+  background-color: #f7f7f7;
+  border-bottom: 1px solid #d6d5d5;
+  height: 3.5rem;
 }
 
-.subtitle {
-  margin: 0;
-  color: var(--muted);
-  max-width: 60ch;
-}
+/* --- Sidebar Nav (adapted from NavMenu.razor.css) --- */
 
-.card {
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  padding: 1rem;
-  backdrop-filter: blur(14px);
-}
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 1rem;
-  margin: 1rem 0 2rem;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.gap-sm {
-  gap: 0.5rem;
-}
-
-.m0 {
-  margin: 0;
-}
-
-.muted {
-  color: var(--muted);
-}
-
-.small {
-  font-size: 0.9rem;
-}
-
-.bullets {
-  margin: 0.25rem 0 0;
-  padding-left: 1.25rem;
-}
-
-.bullets li {
-  margin: 0.35rem 0;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.6rem 0.95rem;
-  border-radius: 999px;
-  border: 1px solid var(--card-border);
-  background: rgba(255, 255, 255, 0.07);
-  text-decoration: none;
+.navbar-toggler {
+  appearance: none;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
-  font-weight: 600;
+  width: 3.5rem;
+  height: 2.5rem;
+  color: white;
+  position: absolute;
+  top: 0.5rem;
+  right: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e")
+    no-repeat center/1.75rem rgba(255, 255, 255, 0.1);
 }
 
-.btn:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.12);
+.navbar-toggler:checked {
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
-.btn-primary {
+/* The top row in the sidebar uses a darker background */
+.sidebar .top-row {
+  height: 3.5rem;
+  background-color: rgba(0, 0, 0, 0.4);
+  border-bottom: none;
+}
+
+.navbar-brand {
+  font-size: 1.1rem;
+}
+
+.nav-item {
+  font-size: 0.9rem;
+  padding-bottom: 0.5rem;
+}
+
+.nav-item:first-of-type {
+  padding-top: 1rem;
+}
+
+.nav-item:last-of-type {
+  padding-bottom: 1rem;
+}
+
+.nav-item .nav-link {
+  color: #d7d7d7;
+  background: none;
   border: none;
-  background: linear-gradient(45deg, var(--accent-2), var(--accent));
-}
-
-.btn-primary:hover {
-  background: linear-gradient(45deg, var(--accent-2), var(--accent));
-}
-
-.field {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.label {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-input,
-select {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: var(--text);
-  border-radius: 12px;
-  padding: 0.55rem 0.7rem;
-  min-width: 180px;
-}
-
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.product {
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 14px;
-  padding: 0.85rem;
-  background: rgba(0, 0, 0, 0.18);
-}
-
-.product h3 {
-  margin: 0 0 0.35rem;
-  font-size: 1.05rem;
-}
-
-.product .meta {
+  border-radius: 4px;
+  height: 3rem;
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.pill {
-  font-size: 0.85rem;
-  color: var(--muted);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-}
-
-.cart-list {
-  display: grid;
-  gap: 0.6rem;
-  margin: 0.75rem 0;
-}
-
-.cart-item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.5rem;
   align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 14px;
-  padding: 0.75rem;
-  background: rgba(0, 0, 0, 0.18);
+  line-height: 3rem;
+  width: 100%;
 }
 
-.cart-item .name {
-  font-weight: 650;
+.nav-item .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.37);
+  color: white;
 }
 
-.cart-item .line {
-  color: var(--muted);
-  font-size: 0.9rem;
+.nav-item .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
-.qty {
-  display: inline-flex;
-  gap: 0.4rem;
-  align-items: center;
+.nav-scrollable {
+  display: none;
 }
 
-.qty button {
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text);
+.navbar-toggler:checked ~ .nav-scrollable {
+  display: block;
+}
+
+/* Responsive behavior mirrors the Blazor defaults */
+@media (max-width: 640.98px) {
+  .top-row {
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 641px) {
+  .page {
+    flex-direction: row;
+  }
+
+  .sidebar {
+    width: 250px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+  }
+
+  .top-row {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  /* Never collapse the sidebar for wide screens */
+  .navbar-toggler {
+    display: none;
+  }
+
+  .nav-scrollable {
+    display: block;
+    height: calc(100vh - 3.5rem);
+    overflow-y: auto;
+  }
+}
+
+/* Demo helpers */
+.table tbody tr[data-action="navigate"] {
   cursor: pointer;
 }
 
-.divider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.16);
-  margin: 0.75rem 0;
+.card.machine-card {
+  cursor: pointer;
 }
 
-.total {
-  font-size: 1.5rem;
-  font-weight: 800;
-}
-
-.site-footer {
-  padding: 2rem 0;
-}
-
-.footer-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 900px) {
-  .grid-2 {
-    grid-template-columns: 1fr;
-  }
-
-  .product-grid {
-    grid-template-columns: 1fr;
-  }
-
-  input,
-  select {
-    min-width: 240px;
-  }
+.card.machine-card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
 }
